@@ -8,6 +8,7 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import (
@@ -525,10 +526,19 @@ class HydrosOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
             except Exception:  # noqa: BLE001
                 mode_options = []
 
-        mode_optional_selector: Any = str
+        mode_optional_selector: Any
         if mode_options:
-            mode_map = {mode: mode for mode in mode_options}
-            mode_optional_selector = vol.Any("", vol.In(mode_map))
+            mode_optional_selector = selector.selector(
+                {
+                    "select": {
+                        "options": mode_options,
+                        "mode": "dropdown",
+                        "custom_value": True,
+                    }
+                }
+            )
+        else:
+            mode_optional_selector = str
 
         def _mode_default(option_key: str, fallback: str) -> str:
             current = str(self._config_entry.options.get(option_key, fallback)).strip()
